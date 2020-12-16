@@ -1,0 +1,69 @@
+# Find all the topics and tasks which are thought in the month of October
+
+db.topics.aggregate([
+{$lookup:{from:"Tasks",localField:"Topic_Id", foreignField:"Topic_Id",as:"Topic"}},
+{$match:{Month:"October"}},{$unwind:"$Topic"},
+{$project:{"Topic Name":"$Topic_Name","Task_Name":"$Topic.Task_name"}}
+])
+
+
+
+# Find all the company drives which appeared between 15 oct-2020 and 31-oct-2020
+
+db.CompanyDrives.find({
+    Drive_Date: {
+        $gte: ISODate("2020-11-15T00:00:00.000Z"),
+        $lt: ISODate("2020-11-31T00:00:00.000Z")
+    }
+});
+
+
+
+# Find all the company drives and students who are appeared for the placement.
+
+db.CompanyDrives.aggregate([{$unwind: "$Students_Attended"}, 
+{$lookup:{from:"users", localField:"Students_Attended", foreignField:"Id", as:"Users"}},
+{$unwind: "$Users"},
+{$project:{"Company Name:": "$Company_Name", "Derive Date:" : "$Drive_Date", "Student Name:":"$Users.Name"}}
+])
+
+
+# Find the number of problems solved by the user in codekata
+
+db.codekata.aggregate([
+    {"$group" : {_id:"$Id", count:{$sum:1}}}
+]);
+
+
+# Find all the mentors with who has the mentee's count more than 2
+
+db.users.aggregate([
+{$group : {_id:"$Mentor_Id", count:{$sum:1}}},
+{$match: {count:{$gte: 2}}},
+{$lookup:{from:"Mentor", localField:"_id", foreignField:"Mentor_Id", as: "Mentors"}},
+{$unwind: "$Mentors"},
+{$project: {"Mentor Name:": "$Mentors.Mentor_Name"}}
+])
+
+
+# Find all the mentors with who has the mentee's count more than 15
+
+db.users.aggregate([
+{$group : {_id:"$Mentor_Id", count:{$sum:1}}},
+{$match: {count:{$gte: 15}}},
+{$lookup:{from:"Mentor", localField:"_id", foreignField:"Mentor_Id", as: "Mentors"}},
+{$unwind: "$Mentors"},
+{$project: {"Mentor Name:": "$Mentors.Mentor_Name"}}
+])
+
+
+
+# Find the number of users who are absent between 15 oct-2020 and 31-oct-2020
+db.Attendance.aggregate([
+{$match : {$and : [{Date:{
+        $gte: ISODate("2020-11-15T00:00:00.000Z"),
+        $lt: ISODate("2020-11-31T00:00:00.000Z")
+    }}, {Attendace_Status:"Absent"}]}},
+ {$group : {_id:"_id", count:{$sum:1}}}
+])
+
